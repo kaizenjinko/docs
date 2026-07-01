@@ -37,8 +37,8 @@
     }
   },
   "logo": {
-    "light": "/images/vietcombank-logo-only.svg",
-    "dark": "/images/vietcombank-logo-only.svg"
+    "light": "/images/VCBNeoQuant(400x200px).svg",
+    "dark": "/images/VCBNeoQuant(400x200px).svg"
   },
   "navbar": {
     "links": [
