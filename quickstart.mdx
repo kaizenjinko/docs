@@ -1,47 +1,76 @@
 ---
 title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+description: "Đóng góp một trang tài liệu đầu tiên vào Quant Docs"
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
+Quickstart này hướng dẫn bạn hoàn tất đóng góp đầu tiên cho **Quant Docs** — từ lúc checkout repo đến khi xuất bản trang qua Pull Request.
 
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
+## Điều kiện tiên quyết
 
-## Prerequisites
+Trước khi bắt đầu, bạn cần:
 
-Before you begin, you must have:
+- Tài khoản GitHub được cấp quyền truy cập repo
+- Git cài đặt trên máy local
+- Trình soạn thảo Markdown hoặc IDE (VS Code, JetBrains, …)
 
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
+Repo không yêu cầu runtime hay package. Toàn bộ nội dung là file MDX; Mintlify đảm nhận build và render.
 
-## Get started
+## Quy trình đóng góp
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
+  <Step title="Tạo nhánh">
+    Checkout một nhánh mới từ `main`.
 
     ```bash
-    npm install your-package
+    git checkout -b docs/<chủ-đề>
     ```
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
+  <Step title="Thêm trang">
+    Tạo file `.mdx` ở thư mục gốc, đặt tên theo kebab-case và phản ánh chủ đề.
 
     ```bash
-    your-cli init
+    touch risk-policy.mdx
     ```
   </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
+  <Step title="Khai báo trong `docs.json`">
+    Thêm đường dẫn vào `navigation.pages`. Gộp nhóm theo chủ đề thông qua `group` nếu cần.
 
-    ```bash
-    your-cli start
+    ```json
+    {
+      "group": "Risk & Compliance",
+      "pages": ["risk-policy"]
+    }
     ```
+  </Step>
+  <Step title="Review và merge">
+    Mở Pull Request. Mintlify cung cấp bản preview tự động — kiểm tra hiển thị, yêu cầu review từ team lead trước khi merge vào `main`.
   </Step>
 </Steps>
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+## Cấu trúc một trang
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
+Mỗi file MDX gồm hai phần:
+
+<CodeGroup>
+```mdx Frontmatter
+---
+title: "Tiêu đề trang"
+description: "Mô tả ngắn gọn"
+---
+```
+
+```mdx Phần thân
+Viết nội dung bằng Markdown, bổ sung component Mintlify khi cần.
+```
+</CodeGroup>
+
+## Nguyên tắc biên tập
+
+- Dùng giọng văn trang trọng, một ý một câu, ưu tiên danh sách liệt kê thay vì đoạn văn dài
+- Không tham chiếu dự án riêng lẻ — viết cho đối tượng chung của team
+- Đặt tên file theo kebab-case, phản ánh chủ đề (ví dụ: `market-data-pipeline.mdx`)
+- Cập nhật `docs.json` đồng thời với việc thêm trang để tránh navigation bị lệch
+
+<Tip>
+  Cần trợ giúp trong quá trình đóng góp, mở issue trên repo hoặc liên hệ team qua kênh nội bộ `#quant-docs`.
 </Tip>
