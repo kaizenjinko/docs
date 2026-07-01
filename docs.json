@@ -37,8 +37,8 @@
     }
   },
   "logo": {
-    "light": "/images/VCBNeoQuant(400x200px).svg",
-    "dark": "/images/VCBNeoQuant(400x200px).svg"
+    "light": "/images/Quant_light.svg",
+    "dark": "/images/Quant_dark.svg"
   },
   "navbar": {
     "links": [
