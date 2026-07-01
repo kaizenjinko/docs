@@ -1,0 +1,54 @@
+---
+title: "Changelog"
+description: "Lịch sử cập nhật tài liệu và thay đổi liên quan."
+icon: "list"
+---
+
+Trang này ghi lại các thay đổi đáng chú ý đối với tài liệu và hệ thống liên quan. Mục mới được thêm bắt đầu từ trên.
+
+<Update label="2026-07-01" description="v1.4 — Documentation hub restructuring">
+  ## Đã thay đổi
+  - Tái định vị repo thành **trung tâm tài liệu team Quant**, không còn gắn với dự án cụ thể.
+  - Bổ sung `Concepts`, `API reference`, `Operations`, `Resources` vào navigation.
+  - Quickstart chuyển sang hướng dẫn đóng góp tài liệu.
+
+  ## Tác động
+  - Contributors: theo checklist trong Quickstart.
+  - Consumers: bookmark các đường dẫn mới trong sidebar.
+</Update>
+
+<Update label="2026-06-25" description="v1.3 — Risk controls">
+  ## Đã thay đổi
+  - Thêm section kill switch với quy trình hai-operator approval.
+  - Bổ sung ngưỡng drawdown 10% ở chế độ defensive.
+
+  ## Hành động cần thiết
+  - Trading desk review lại config trong `quant-config/risk/rules/`.
+  - Update runbook liên quan trong repo.
+</Update>
+
+<Update label="2026-06-10" description="v1.2 — Market data API">
+  ## Đã thay đổi
+  - Chuẩn hoá canonical schema cho quote, trade, bar.
+  - Bổ sung endpoint `GET /bars` với phân trang.
+
+  ## Migration
+  - Consumers cũ dùng schema vendor phải chuyển sang canonical schema.
+  - Token rotate bắt đầu từ `2026-07-01`.
+</Update>
+
+<Update label="2026-05-28" description="v1.1 — Backtest methodology">
+  ## Đã thay đổi
+  - Bổ sung walk-forward validation bắt buộc cho mọi chiến lược trước khi publish.
+  - Tài liệu hoá checklist 4 gate trước khi review.
+</Update>
+
+<Update label="2026-05-12" description="v1.0 — Initial set">
+  ## Khởi tạo
+  - Landing page và quickstart cho documentation repo.
+  - Cấu hình Mintlify cơ bản theo theme `mint`.
+</Update>
+
+<Tip>
+  Cần đối chiếu phiên bản tài liệu với phiên bản hệ thống? Xem tag trong release doc của team tương ứng hoặc mở issue tại repo.
+</Tip>

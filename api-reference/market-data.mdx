@@ -1,0 +1,118 @@
+---
+title: "Market data API"
+description: "Truy vấn quote, trade và bar từ hệ thống phân phối dữ liệu."
+icon: "chart-line"
+---
+
+API dữ liệu thị trường phục vụ cả hai hướng: streaming real-time cho trading và query lịch sử cho backtest. Mọi endpoint đều trả về canonical schema đã chuẩn hoá tại pipeline.
+
+## Base URL
+
+```
+https://api.quant.local/v1
+```
+
+API chỉ phục vụ nội bộ team và các consumer đã đăng ký. Mọi request yêu cầu header `Authorization`.
+
+## Xác thực
+
+<ParamField path="Authorization" type="string" required>
+  Bearer token cấp bởi team lead. Token được rotate mỗi 90 ngày.
+</ParamField>
+
+<Note>
+  Service account dùng cho cron/backtest lưu token trong secret manager, **không** commit vào repo.
+</Note>
+
+## Endpoints
+
+### `GET /quotes`
+
+Trả về quote mới nhất cho một danh sách symbol.
+
+<ParamField query="symbols" type="string[]" required>
+  Danh sách symbol phân tách bằng dấu phẩy. Tối đa 50 symbol mỗi request.
+</ParamField>
+
+<ParamField query="venue" type="string" default="primary">
+  Chỉ định nguồn (vendor) cho quote. Mặc định đã cấu hình trong registry.
+</ParamField>
+
+<ResponseField name="quotes" type="Quote[]">
+  Danh sách quote trả về theo đúng thứ tự yêu cầu.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -G "https://api.quant.local/v1/quotes" \
+  -H "Authorization: Bearer $TOKEN" \
+  --data-urlencode "symbols=VRE.HOSE,VIC.HOSE"
+```
+
+```python Python
+import requests
+r = requests.get(
+    "https://api.quant.local/v1/quotes",
+    params={"symbols": ["VRE.HOSE", "VIC.HOSE"]},
+    headers={"Authorization": f"Bearer {token}"},
+    timeout=2.0,
+)
+r.raise_for_status()
+quotes = r.json()["quotes"]
+```
+
+```typescript TypeScript
+const r = await fetch(
+  "https://api.quant.local/v1/quotes?symbols=VRE.HOSE,VIC.HOSE",
+  { headers: { Authorization: `Bearer ${token}` } }
+);
+if (!r.ok) throw new Error(`HTTP ${r.status}`);
+const { quotes } = await r.json();
+```
+</RequestExample>
+
+### `GET /bars`
+
+Trả về bar lịch sử theo khung thời gian.
+
+<ParamField query="symbol" type="string" required>
+  Symbol duy nhất.
+</ParamField>
+
+<ParamField query="from" type="string" required>
+  ISO-8601 timestamp (UTC). Bao gồm cả bar chứa thời điểm này.
+</ParamField>
+
+<ParamField query="to" type="string" required>
+  ISO-8601 timestamp (UTC). Exclusive.
+</ParamField>
+
+<ParamField query="granularity" type="string" default="1m">
+  Một trong `1m`, `5m`, `15m`, `1h`, `1d`.
+</ParamField>
+
+<ResponseField name="bars" type="Bar[]">
+  Các bar sắp xếp tăng theo `ts`.
+</ResponseField>
+
+<Warning>
+  Mỗi request giới hạn 100 000 bar. Với khoảng thời gian dài, hãy phân trang bằng cách lặp `from`/`to`.
+</Warning>
+
+## Lỗi phổ biến
+
+<AccordionGroup>
+  <Accordion title="401 Unauthorized">
+    Token hết hạn hoặc sai endpoint. Verify token qua channel `#quant-platform`.
+  </Accordion>
+  <Accordion title="429 Too Many Requests">
+    Vượt quota 60 req/s cho mỗi service account. Dùng batch endpoint thay vì loop single-symbol.
+  </Accordion>
+  <Accordion title="503 Data temporarily unavailable">
+    Nguồn upstream mất kết nối. Pipeline sẽ tự retry; đợi tối đa 5 phút trước khi escalate.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  Tham khảo [Pipeline](/concepts/data-pipeline) để hiểu rõ canonical schema mà API trả về.
+</Tip>

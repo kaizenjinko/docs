@@ -1,0 +1,87 @@
+---
+title: "Backtesting"
+description: "Phương pháp luận backtest đảm bảo kết quả tái lập được."
+icon: "flask-conical"
+---
+
+Backtest là quá trình tái lập một chiến lược trên dữ liệu lịch sử để đánh giá hiệu năng ngoài mẫu. Trang này mô tả phương pháp luận chuẩn của team Quant, tránh các sai lầm phổ biến dẫn đến kết quả sai lệch.
+
+## Nguyên tắc cốt lõi
+
+<Check>
+  Mọi chiến lược phải reproducible từ input, code và config — không phụ thuộc vào state ẩn.
+</Check>
+
+<Check>
+  Không sử dụng dữ liệu tương lai tại bất kỳ bước nào của quá trình quyết định.
+</Check>
+
+<Warning>
+  Backtest kết quả đẹp **không đảm bảo** hiệu năng tương lai. Mọi kết luận cần kèm theo phân tích drawdown, slippage và stress test.
+</Warning>
+
+## Quy trình chuẩn
+
+<Steps>
+  <Step title="Định nghĩa tín hiệu">
+    Mô tả tín hiệu đầu vào bằng công thức hoặc pseudocode. Tránh hard-code tham số vào code chiến lược.
+  </Step>
+  <Step title="Chạy backtest">
+    Sử dụng bộ dữ liệu canonical, không tinh chỉnh tham số trong khi chạy.
+
+    <CodeGroup>
+    ```bash CLI
+    quant backtest run --strategy mean_reversion --config config/eur.yaml
+    ```
+
+    ```yaml Sample config (eur.yaml)
+    universe: ["EURUSD", "GBPUSD", "USDJPY"]
+    window: 20
+    threshold: 1.5
+    fee_bps: 2.0
+    slippage_bps: 1.0
+    ```
+    </CodeGroup>
+  </Step>
+  <Step title="Walk-forward validation">
+    Chia dữ liệu thành các cửa sổ train/test cuốn chiếu. In-sample tối ưu hoá tham số, out-of-sample đánh giá.
+  </Step>
+  <Step title="Đánh giá rủi ro">
+    Báo cáo tối thiểu: max drawdown, sharpe, hit rate, exposure time, churn. Cảnh báo nếu bất kỳ chỉ số nào ngoài ngưỡng cho phép.
+  </Step>
+</Steps>
+
+## Cấu hình phổ biến
+
+<Tabs>
+  <Tab title="Mean reversion">
+    Giả định giá quay về mean trong cửa sổ ngắn. Thường dùng cho cặp tiền, futures gần ngưỡng phái sinh.
+  </Tab>
+  <Tab title="Trend following">
+    Bắt xu hướng bằng breakout hoặc moving-average cross. Robust với regime shifts nhưng có drawdown dài.
+  </Tab>
+  <Tab title="Cross-sectional">
+    Xếp hạng universe theo tín hiệu, long-short top/bottom. Phụ thuộc vào chất lượng ranking signal.
+  </Tab>
+</Tabs>
+
+## Checklist trước khi xuất bản
+
+<AccordionGroup>
+  <Accordion title="Look-ahead bias">
+    Xác nhận tín hiệu tại thời điểm `t` chỉ sử dụng thông tin `<= t`. Dùng `data-snapshot` để audit.
+  </Accordion>
+  <Accordion title="Survivorship bias">
+    Universe phải bao gồm symbol đã bị delisted/halted. Không chỉ filter theo danh sách hiện tại.
+  </Accordion>
+  <Accordion title="Transaction cost">
+    Áp dụng phí + slippage realistic. Tránh overfitting xung quanh chi phí thấp.
+  </Accordion>
+  <Accordion title="Out-of-sample gate">
+    Đặt ngưỡng sharpe/drawdown tối thiểu trên OOS. Không push chiến lược chưa vượt gate.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  Ghi lại **backtest journal** kèm lý do quyết định: chiến lược, tham số, dataset, kỳ vọng. Journal này là đầu vào bắt buộc khi đưa chiến lược lên review.
+</Tip>

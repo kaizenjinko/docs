@@ -1,0 +1,117 @@
+---
+title: "Portfolio API"
+description: "Truy vấn trạng thái danh mục, vị thế và PnL."
+icon: "briefcase"
+---
+
+Portfolio API cung cấp snapshot của danh mục tại một thời điểm và các phép tính liên quan (exposure, PnL, contribution). API này được consume bởi dashboard, alerting và reconciliation job.
+
+## Endpoints
+
+### `GET /portfolio/{account}/snapshot`
+
+Trả về snapshot đầy đủ của một tài khoản.
+
+<ParamField path="account" type="string" required>
+  Mã tài khoản (ví dụ: `prop_001`).
+</ParamField>
+
+<ParamField query="as_of" type="string">
+  ISO-8601 timestamp. Mặc định giá trị mới nhất có sẵn.
+</ParamField>
+
+<ResponseField name="account" type="string">
+  Mã tài khoản.
+</ResponseField>
+
+<ResponseField name="as_of" type="string">
+  Thời điểm snapshot.
+</ResponseField>
+
+<ResponseField name="positions" type="Position[]">
+  Danh sách vị thế hiện tại.
+</ResponseField>
+
+<ResponseField name="cash" type="number">
+  Số dư tiền mặt tại `as_of`, đơn vị base currency.
+</ResponseField>
+
+<ResponseField name="exposure" type="ExposureBreakdown">
+  Phân tích exposure theo asset class, sector hoặc region.
+</ResponseField>
+
+### `GET /portfolio/{account}/pnl`
+
+Trả về PnL trong khoảng thời gian yêu cầu.
+
+<ParamField path="account" type="string" required>
+  Mã tài khoản.
+</ParamField>
+
+<ParamField query="from" type="string" required>
+  ISO-8601 timestamp bắt đầu (UTC).
+</ParamField>
+
+<ParamField query="to" type="string" required>
+  ISO-8601 timestamp kết thúc (UTC), exclusive.
+</ParamField>
+
+<ParamField query="granularity" type="string" default="1d">
+  Bucket PnL theo `1m`, `1h`, `1d`.
+</ParamField>
+
+## Quy ước trả về
+
+<Info>
+  Mọi số tiền trả về ở đơn vị base currency của tài khoản. Conversion rate được chốt tại `as_of`.
+</Info>
+
+<Info>
+  Trường `exposure` được tính theo **gross** (tổng giá trị tuyệt đối), không phải net.
+</Info>
+
+## Code mẫu
+
+<CodeGroup>
+```python Daily reconciliation
+import httpx
+from datetime import datetime, timedelta, timezone
+
+now = datetime.now(timezone.utc)
+r = httpx.get(
+    f"https://api.quant.local/v1/portfolio/prop_001/pnl",
+    params={
+        "from": (now - timedelta(days=1)).isoformat(),
+        "to": now.isoformat(),
+    },
+    headers={"Authorization": f"Bearer {token}"},
+    timeout=5.0,
+)
+r.raise_for_status()
+report = r.json()
+```
+
+```go Go
+req, _ := http.NewRequest("GET",
+    "https://api.quant.local/v1/portfolio/prop_001/snapshot", nil)
+req.Header.Set("Authorization", "Bearer "+token)
+res, _ := http.DefaultClient.Do(req)
+defer res.Body.Close()
+```
+
+```bash Smoke test
+curl -sH "Authorization: Bearer $TOKEN" \
+  "https://api.quant.local/v1/portfolio/prop_001/snapshot" | jq .
+```
+</CodeGroup>
+
+## Liên quan
+
+<Columns cols={2}>
+  <Card title="Market data API" icon="chart-line" href="/api-reference/market-data">
+    Lấy giá thị trường phục vụ định giá snapshot.
+  </Card>
+  <Card title="Risk controls" icon="shield" href="/operations/risk-controls">
+    Ngưỡng rủi ro áp dụng cho mỗi account.
+  </Card>
+</Columns>

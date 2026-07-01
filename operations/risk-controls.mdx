@@ -1,0 +1,97 @@
+---
+title: "Risk controls"
+description: "Ngưỡng rủi ro, pre-trade check và quy trình kill-switch."
+icon: "shield"
+---
+
+Risk controls là lớp cuối cùng trước khi lệnh chạm broker. Mọi chiến lược đều phải pass pre-trade check; lệnh vi phạm bị block hoàn toàn — không có cơ chế override ngoại lệ.
+
+## Ngưỡng mặc định
+
+<Steps>
+  <Step title="Position limit">
+    Mỗi vị thế không vượt 5% NAV của account. Áp dụng cả long và short theo giá trị tuyệt đối.
+  </Step>
+  <Step title="Sector concentration">
+    Tổng exposure theo sector không vượt 25% NAV. Ngoại lệ trading desk phải được risk committee duyệt bằng văn bản.
+  </Step>
+  <Step title="Daily loss limit">
+    Tổng PnL âm trong ngày vượt 2% NAV, toàn bộ account bị tạm ngưng. Manual resume yêu cầu hai-operator approval.
+  </Step>
+  <Step title="Drawdown kill switch">
+    Khi drawdown từ high water mark vượt 10%, tất cả account vào chế độ **defensive**: chỉ đóng vị thế, không mở mới.
+  </Step>
+</Steps>
+
+## Pre-trade check
+
+<CodeGroup>
+```yaml Sample rule set
+rules:
+  - id: per-symbol-cap
+    type: weight_cap
+    scope: symbol
+    threshold: 0.05
+  - id: per-sector-cap
+    type: weight_cap
+    scope: sector
+    threshold: 0.25
+  - id: daily-loss-breaker
+    type: pnl_breaker
+    window: intraday
+    threshold: -0.02
+```
+
+```python Pre-trade validator
+def validate(order, account, portfolio):
+    for rule in rules:
+        result = rule.evaluate(order, account, portfolio)
+        if not result.ok:
+            raise PreTradeViolation(rule.id, result.reason)
+```
+</CodeGroup>
+
+## Kill switch
+
+<Warning>
+  Kill switch là quyền lực cuối cùng. Chỉ hai-operator approval mới kích hoạt. Mỗi lần kích hoạt phải có incident write-up trong vòng 1 giờ.
+</Warning>
+
+<Check>
+  Kill switch hoạt động ở **exchange layer**, không phải client. Tắt client vẫn không ngăn lệnh đã submit tới broker.
+</Check>
+
+### Quy trình kích hoạt
+
+<Steps>
+  <Step title="Phát hiện sự cố">
+    On-call nhận alert Tier 1 liên quan tới PnL hoặc execution anomaly.
+  </Step>
+  <Step title="Liên hệ operator thứ hai">
+    Hai-operator approval bắt buộc. Thông báo channel `#quant-incidents`.
+  </Step>
+  <Step title="Submit kill switch">
+    Sử dụng CLI `quant risk kill --reason <text>` và ghi log.
+  </Step>
+  <Step title="Post-mortem">
+    Trong vòng 1 giờ, mở incident doc tại `docs/incidents/<yyyy-mm-dd>-<slug>.mdx`.
+  </Step>
+</Steps>
+
+## Escalation path
+
+<AccordionGroup>
+  <Accordion title="Trading risk">
+    Lead trader → Head of trading. SLA: phản hồi trong 5 phút trong giờ thị trường.
+  </Accordion>
+  <Accordion title="Model risk">
+    Quant lead → Risk committee. SLA: review trong 24 giờ.
+  </Accordion>
+  <Accordion title="Infra risk">
+    Platform team on-call → SRE lead. SLA: phản hồi trong 5 phút.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  Pre-trade check config nằm trong repo `quant-config` dưới `risk/rules/`. Mọi thay đổi đều phải qua pull request kèm theo rationale và backtest repro.
+</Tip>

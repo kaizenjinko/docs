@@ -1,0 +1,78 @@
+---
+title: "Monitoring"
+description: "Observability cho pipeline, backtest và portfolio service."
+icon: "activity"
+---
+
+Trang này tổng hợp các tín hiệu vận hành bắt buộc phải có cho mọi service thuộc team Quant. Mục tiêu là phát hiện sự cố trước khi end-user nhận ra.
+
+## Health checks cốt lõi
+
+<Steps>
+  <Step title="Liveness">
+    Process còn chạy. `/healthz` phản hồi 200 trong vòng 100 ms. Không phụ thuộc dependency bên ngoài.
+  </Step>
+  <Step title="Readiness">
+    Service sẵn sàng nhận traffic. `/readyz` kiểm tra dependency (`db`, `cache`, `downstream API`) và chỉ trả 200 khi tất cả xanh.
+  </Step>
+  <Step title="Deep check">
+    Mỗi 5 phút, một probe chạy end-to-end với payload đại diện. Kết quả được ghi vào dashboard riêng.
+  </Step>
+</Steps>
+
+## Tín hiệu quan trọng
+
+<CodeGroup>
+```yaml Pipeline latency
+service: data-pipeline
+metric: end_to_end_lag_seconds
+thresholds:
+  warn: 60
+  crit: 180
+window: 5m
+```
+
+```yaml Backtest queue
+service: backtest-runner
+metric: queue_depth
+thresholds:
+  warn: 50
+  crit: 200
+window: 1m
+```
+
+```yaml Portfolio API errors
+service: portfolio-api
+metric: http_requests_total{status=~"5.."}
+thresholds:
+  warn: 0.5%
+  crit: 2.0%
+window: 5m
+```
+</CodeGroup>
+
+## Alert routing
+
+<AccordionGroup>
+  <Accordion title="Tier 1 — service down">
+    Page on-call trong vòng 1 phút. Channel `#quant-incidents`. Bao gồm các lỗi: readiness fail liên tục, error rate &gt; 5%, dữ liệu stale.
+  </Accordion>
+  <Accordion title="Tier 2 — degraded">
+    Cảnh báo trong channel `#quant-ops`. Không page. Ví dụ: latency tăng 2x baseline nhưng không đạt ngưỡng critical.
+  </Accordion>
+  <Accordion title="Tier 3 — informational">
+    Log + dashboard. Không notify. Dùng cho trend anomaly và capacity warning.
+  </Accordion>
+</AccordionGroup>
+
+## On-call checklist
+
+- [ ] Verify alert source có dữ liệu 5 phút gần nhất.
+- [ ] Kiểm tra dashboard `services-overview` cho service liên quan.
+- [ ] Đọc recent deploy qua channel `#quant-deploys`.
+- [ ] Ghi log sự cố vào incident channel ngay cả khi tự khắc phục.
+- [ ] Sau khi ổn định, mở issue post-mortem trong 24 giờ nếu Tier 1.
+
+<Tip>
+  Bất kỳ dashboard/signal nào mới đều phải có owner người và tài liệu liên kết từ dashboard tới runbook tương ứng.
+</Tip>

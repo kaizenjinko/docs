@@ -1,0 +1,102 @@
+---
+title: "Data pipeline"
+description: "Cách dữ liệu thị trường được thu thập, chuẩn hoá và phân phối trong hệ thống."
+icon: "database"
+---
+
+Data pipeline là xương sống của hệ thống định lượng: thu thập dữ liệu thô từ nhiều nguồn, chuẩn hoá về một schema chung, và phân phối đến các mô-đun phân tích, backtest và trading. Trang này mô tả kiến trúc tham chiếu team Quant đang vận hành.
+
+<Note>
+  Pipeline được thiết kế theo nguyên tắc **deterministic replay** — mọi bước đều có thể tái lập từ input gốc.
+</Note>
+
+## Các giai đoạn
+
+<Steps>
+  <Step title="Ingestion">
+    Kết nối vendor (bloomberg-like, sàn, nguồn thay thế) qua connector dạng plugin. Mỗi connector chịu trách nhiệm xác thực, lấy dữ liệu và ghi log schema.
+
+    ```python
+    class Connector(Protocol):
+        def fetch(self, symbol: str, since: datetime) -> Iterator[Quote]: ...
+    ```
+  </Step>
+  <Step title="Normalization">
+    Ánh xạ schema vendor về canonical schema của team. Thông tin chi tiết được lưu trong từng source registry.
+  </Step>
+  <Step title="Validation">
+    Kiểm tra invariants: thiếu tick, giá trị bất thường, lệch múi giờ. Dữ liệu vi phạm được đánh dấu nhưng không tự động sửa.
+  </Step>
+  <Step title="Distribution">
+    Phục vụ dữ liệu tới consumer (backtest engine, dashboard, alerts) thông qua cùng một gateway.
+  </Step>
+</Steps>
+
+## Kiểu dữ liệu được hỗ trợ
+
+<CodeGroup>
+```json Quote
+{
+  "symbol": "VRE.HOSE",
+  "ts": "2026-06-30T09:30:00+07:00",
+  "bid": 24500.0,
+  "ask": 24550.0,
+  "last": 24520.0,
+  "volume": 12450
+}
+```
+
+```json Trade
+{
+  "symbol": "VRE.HOSE",
+  "ts": "2026-06-30T09:31:12+07:00",
+  "price": 24540.0,
+  "size": 100,
+  "side": "BUY"
+}
+```
+
+```json Bar (1m)
+{
+  "symbol": "VRE.HOSE",
+  "ts": "2026-06-30T09:30:00+07:00",
+  "open": 24500.0,
+  "high": 24580.0,
+  "low": 24490.0,
+  "close": 24540.0,
+  "volume": 18200
+}
+```
+</CodeGroup>
+
+## Lựa chọn công cụ
+
+<Tabs>
+  <Tab title="Stream-first">
+    Phù hợp khi latency quan trọng hơn throughput. Ví dụ: signal lấy feed tick real-time để ra quyết định trong phiên.
+  </Tab>
+  <Tab title="Batch-first">
+    Phù hợp với EOD pipeline, backtest dữ liệu lịch sử, hoặc các bài toán không nhạy latency.
+  </Tab>
+  <Tab title="Hybrid">
+    Tick stream cho cảnh báo, batch cho analytics. Đây là cấu hình phổ biến nhất của team hiện tại.
+  </Tab>
+</Tabs>
+
+## Vấn đề thường gặp
+
+<AccordionGroup>
+  <Accordion title="Dữ liệu từ nhiều nguồn conflict nhau">
+    Đặt một bước **source ranking** trong registry: xác định nguồn chính (primary) và nguồn dự phòng (fallback) theo từng `symbol`. Khi hai nguồn khác biệt quá ngưỡng, log lại để review.
+  </Accordion>
+  <Accordion title="Vendor thay đổi schema">
+    Theo dõi schema version trong connector. Khuyến khích viết test snapshot cho từng version để phát hiện drift sớm.
+  </Accordion>
+  <Accordion title="Data gap trong giờ giao dịch">
+    Báo cáo gap ngay khi phát hiện. Không tự ý fill — để quyết định cuối cùng cho consumer.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  Khi thêm connector mới, đăng ký nó trong `connectors/registry.yaml` và chạy pipeline replay trên dữ liệu lịch sử ít nhất một phiên trước khi bật production.
+</Tip>

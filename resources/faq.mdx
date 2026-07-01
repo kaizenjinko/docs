@@ -1,0 +1,67 @@
+---
+title: "Frequently asked questions"
+description: "Các câu hỏi thường gặp từ thành viên team và contributor mới."
+icon: "help-circle"
+---
+
+Câu hỏi thường gặp khi tham gia đóng góp cho **Quant Docs**. Nếu câu hỏi của bạn chưa được liệt kê, mở issue trên repo hoặc gửi vào channel `#quant-docs`.
+
+## Đóng góp
+
+<AccordionGroup>
+  <Accordion title="Tôi cần viết tài liệu cho dự án mới, bắt đầu từ đâu?">
+    Đọc [Quickstart](/quickstart) để nắm quy trình branch → page → `docs.json`. Sau đó xem [Data pipeline](/concepts/data-pipeline) hoặc [Backtesting](/concepts/backtesting) làm mẫu cấu trúc trang có nhiều component.
+  </Accordion>
+  <Accordion title="Có cần review trước khi merge không?">
+    Bắt buộc. Mỗi PR cần ít nhất **một review từ team lead** của nhóm phụ trách chủ đề. Nếu bạn chưa biết ai phụ trách, mở issue trước.
+  </Accordion>
+  <Accordion title="Sử dụng component Mintlify nào cho trường hợp của tôi?">
+    Tham khảo [Mintlify components](https://mintlify.com/docs/components). Quy tắc đơn giản: danh sách liệt kê → `<Steps>` hoặc `<Tabs>`; so sánh đối tượng → `<Columns>` + `<Card>`; cảnh báo → `<Warning>`; gợi ý → `<Tip>`.
+  </Accordion>
+</AccordionGroup>
+
+## Build & preview
+
+<AccordionGroup>
+  <Accordion title="Mintlify preview không hiển thị page mới">
+    Kiểm tra đã thêm page vào `navigation.pages` của `docs.json` chưa. Page không nằm trong navigation sẽ bị ẩn và không có preview URL.
+  </Accordion>
+  <Accordion title="Ảnh không hiển thị">
+    Đặt asset tại `images/`. Tham chiếu đường dẫn tuyệt đối bắt đầu bằng `/images/`. Không dùng đường dẫn tương đối từ file MDX.
+  </Accordion>
+  <Accordion title="Lint hoặc build fail vì symbol/MDX syntax">
+    Chạy `mint broken-links` và `mint validate` ở local. Lỗi phổ biến: code block thiếu language tag, thẻ component đóng mở không khớp.
+  </Accordion>
+</AccordionGroup>
+
+## Convention
+
+<AccordionGroup>
+  <Accordion title="Tôi nên viết tiếng Việt hay tiếng Anh?">
+    Tuỳ vào audience của trang. Trang nội bộ team Việt Nam dùng tiếng Việt, trang phục vụ partner nước ngoài dùng tiếng Anh. Giữ nhất quán ngôn ngữ trong một file.
+  </Accordion>
+  <Accordion title="Voice và tone chuẩn là gì?">
+    Second person (`bạn` hoặc `you`), active voice, một ý một câu. Tránh marketing language. Sentence case cho heading.
+  </Accordion>
+  <Accordion title="Đặt tên file như thế nào?">
+    Kebab-case, phản ánh chủ đề. Ví dụ: `risk-controls.mdx`, `data-pipeline.mdx`. Không đặt tên theo dự án riêng lẻ.
+  </Accordion>
+</AccordionGroup>
+
+## Vận hành
+
+<AccordionGroup>
+  <Accordion title="Service đang down, ai liên hệ?">
+    Xem [Monitoring](/operations/monitoring) cho alert routing. Sự cố Tier 1 thông báo `#quant-incidents` và page on-call ngay.
+  </Accordion>
+  <Accordion title="Tôi cần truy cập production data, quy trình ra sao?">
+    Mở access request ticket tại repo `quant-platform`, kèm lý do và thời hạn. Mọi truy cập được log và review định kỳ.
+  </Accordion>
+  <Accordion title="Một chiến lược có hiệu năng bất thường, báo cáo thế nào?">
+    Tạo issue trong repo với tag `model-anomaly`, kèm backtest journal và recent prod log. Không tự ý chỉnh config production.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  Cập nhật FAQ khi phát hiện câu hỏi mới. Mục tiêu là mỗi contributor mới có thể tự onboard chỉ qua các trang tài liệu này mà không cần hỏi riêng.
+</Tip>
